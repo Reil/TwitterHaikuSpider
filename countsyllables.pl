@@ -12,32 +12,31 @@ print "Parsing complete\n";
 
 
 $ENV{NET_TWITTER_NO_TRENDS_WARNING}=1;
-
-
-
 my $nt = Net::Twitter->new (
   (traits => [qw/API::Search/]));
 
-my $r = $nt->search({
-  q=>"pope",
-  rpp=>"100",
-});
+for (my $i = 1; $i < 10; $i++) {
+  my $r = $nt->search({
+    q=>"pope",
+    rpp=>"100",
+    page=> "$i",
+  });
 
-for my $status ( @{$r->{results}} ) {
-  my $syllables = &syllables_in_line($dict, $suffixdict, $status->{text});
-  if ($syllables ne ""){
-    print "$syllables \n";
-    #print "\@$status->{from_user}";
-    #print "\t$status->{created_at}\n";
-    print "\t\t$status->{text}\n";
-    #print "-----------------------------------------------------\n";
+  for my $status ( @{$r->{results}} ) {
+    my $syllables = &syllables_in_line($dict, $suffixdict, $status->{text});
+    if ($syllables ne ""){
+      print "$syllables: ";
+      #print "\@$status->{from_user}";
+      #print "\t$status->{created_at}\n";
+      print "\t\t$status->{text}\n";
+      #print "-----------------------------------------------------\n";
+    }
   }
 }
 
-# Returns a string containing all possible syllable counts for the given line 
 sub syllables_in_line($$$) {
   my $s_in_line = 0;  # the 's' stands for 'syllables'
-  my @words = split('[[:space:]"\?!\:\.\,]', $_[2]);
+  my @words = split('[[:space:]"\?!\:\.\,#]', $_[2]);
   my $dict = $_[0];
   my $suffixdict = $_[1];
   foreach my $word (@words){
