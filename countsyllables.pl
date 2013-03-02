@@ -61,7 +61,8 @@ sub syllables_in_line($$$) {
   return $s_in_line;
 }
 
-# Returns a string containing all possible syllable counts for that word
+# Returns a string containing all possible syllable counts for that word as
+# integers seperated by spaces. For example, "5 6 7".
 sub syllables_in_word($$$) {
   my $word = lc $_[2];
   my $suffixdict = $_[1];
@@ -80,6 +81,8 @@ sub syllables_in_word($$$) {
       'ed'   => 0,
       'en'   => 1
     );
+    # Look for a suffix match. If we hit a match, remove the suffix, see if
+    # the suffix-less word has a dictionary entry. If so, use that.
     foreach my $key (keys %suffixes) {
       if ($word =~ m/$key$/) {
         my $tempword = $word;
@@ -104,6 +107,11 @@ sub syllables_in_word($$$) {
     }
   }
   if($word_count eq ""){
+    # Inbuilt special cases failed. Try the dictionary suffixes.
+    # Works the same as above, only there's more of them, and I don't agree with
+    # every single one.
+    # (Dictionary doesn't list any no-syllable suffixes, and there are a lot of
+    # cases where the suffix doesn't actually add syllables.
     foreach my $key (keys %$suffixdict) {
       if ($word =~ m/$key$/) {
         my $tempword = $word;
