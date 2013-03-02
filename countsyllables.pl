@@ -1,28 +1,36 @@
 #!/usr/bin/env perl
 use strict;
+use Net::Twitter;
+use Scalar::Util 'blessed';
 
+print "Parsing dictionary\n";
 my $dict       = &dictionary_open("syllablecount.txt");
 my $suffixdict = &dictionary_open2("syllablecount.txt");
+print "Parsing complete\n";
 
-# foreach my $key (keys %$suffixdict) {
-   # print "\n$key"; # $suffixdict->{$key}
-# }
 
-my @phrases = (
-  "What's up",
-  "What's",
-  "WhAT",
-  "up",
-  "WhAt's up?!",
-  "is am were was",
-  "am",
-  "amgerous");
-foreach my $phrase (@phrases) {
-  print "\"$phrase\": " . &syllables_in_line($dict, $suffixdict, $phrase) . "\n";
+$ENV{NET_TWITTER_NO_TRENDS_WARNING}=1;
+
+
+
+my $nt = Net::Twitter->new (
+  (traits => [qw/API::Search/]));
+
+my $r = $nt->search({
+  q=>"pope",
+  rpp=>"100",
+});
+
+for my $status ( @{$r->{results}} ) {
+  my $syllables = &syllables_in_line($dict, $suffixdict, $status->{text});
+  if ($syllables ne ""){
+    print "$syllables \n";
+    #print "\@$status->{from_user}";
+    #print "\t$status->{created_at}\n";
+    print "\t\t$status->{text}\n";
+    #print "-----------------------------------------------------\n";
+  }
 }
-print "What: " . &syllables_in_word($dict, $suffixdict, "What") . "\n";
-print "up: " . &syllables_in_word($dict, $suffixdict, "up") . "\n";
-print "oid: " . &syllables_in_word($suffixdict, $suffixdict, "oid") . "\n";
 
 # Returns a string containing all possible syllable counts for the given line 
 sub syllables_in_line($$$) {
