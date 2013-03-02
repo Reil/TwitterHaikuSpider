@@ -4,8 +4,10 @@ use Net::Twitter;
 use Scalar::Util 'blessed';
 
 print "Parsing dictionary\n";
-my $dict       = &dictionary_open("syllablecount.txt");
-my $suffixdict = &dictionary_open2("syllablecount.txt");
+my $dict       = &dictionary_open ("syllablecount-generated.txt",
+                                   "syllablecount-custom.txt");
+my $suffixdict = &dictionary_open2("syllablecount-generated.txt",
+                                   "syllablecount-custom.txt");
 print "Parsing complete\n";
 
 
@@ -145,21 +147,25 @@ sub syllables_in_word($$$) {
 }
 
 sub dictionary_open($) {
-  open(my $dict, "<", $_[0])
-    or die "Could not open < $_[0]!";
   my %dictionary = {};
-  while (<$dict>){
-    (my $word, my $syllables) = $_ =~ /([a-z\-\\]*)(.*)/;
-    if (!($word =~ m/^\-/)) {
-      # Remove duplicates
-      (my @s_iter) = $syllables =~ /\d+/g;
-      my $new_syllables;
-      foreach my $n (@s_iter) {          
-        if ($new_syllables !~ / $n /) {
-          $new_syllables .= " $n ";
+  
+  foreach my $dictFile (@_) {
+    print $dictFile;
+    open(my $dict, "<", $dictFile)
+      or die "Could not open < $dictFile!";
+    while (<$dict>){
+      (my $word, my $syllables) = $_ =~ /([a-z\-\\]*)(.*)/;
+      if (!($word =~ m/^\-/)) {
+        # Remove duplicates
+        (my @s_iter) = $syllables =~ /\d+/g;
+        my $new_syllables;
+        foreach my $n (@s_iter) {          
+          if ($new_syllables !~ / $n /) {
+            $new_syllables .= " $n ";
+          }
         }
+        $dictionary{$word} = $new_syllables;
       }
-      $dictionary{$word} = $new_syllables;
     }
   }
   return \%dictionary;
@@ -167,22 +173,24 @@ sub dictionary_open($) {
 
 # Assembles a dictionary of prefixes
 sub dictionary_open2($) {
-  open(my $dict, "<", $_[0])
-    or die "Could not open < $_[0]!";
   my %dictionary = {};
-  while (<$dict>){
-    (my $word, my $syllables) = $_ =~ /([a-z\-\\]*)(.*)/;
-    if ($word =~ m/^\-/) {      
-      # Remove duplicates
-      (my @s_iter) = $syllables =~ /\d+/g;
-      my $new_syllables;
-      foreach my $n (@s_iter) {          
-        if ($new_syllables !~ / $n /) {
-          $new_syllables .= " $n ";
+  
+  foreach my $dictFile (@_) {
+    open(my $dict, "<", $dictFile)
+      or die "Could not open < $_[0]!";
+    while (<$dict>){
+      (my $word, my $syllables) = $_ =~ /([a-z\-\\]*)(.*)/;
+      if ($word =~ m/^\-/) {      
+        # Remove duplicates
+        (my @s_iter) = $syllables =~ /\d+/g;
+        my $new_syllables;
+        foreach my $n (@s_iter) {          
+          if ($new_syllables !~ / $n /) {
+            $new_syllables .= " $n ";
+          }
         }
+        $dictionary{substr($word, 1)} = $new_syllables;
       }
-      
-      $dictionary{substr($word, 1)} = $new_syllables;
     }
   }
   return \%dictionary;
