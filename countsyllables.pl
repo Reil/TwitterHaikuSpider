@@ -39,6 +39,9 @@ sub syllables_in_line($$$) {
   my $dict = $_[0];
   my $suffixdict = $_[1];
   foreach my $word (@words){
+    if ($word eq "") {
+      next;
+    }
     my $s_in_word = syllables_in_word($dict, $suffixdict, $word);
     my $new_s_in_line = "";
     
