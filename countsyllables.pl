@@ -35,7 +35,7 @@ for my $status ( @{$r->{results}} ) {
 # Returns a string containing all possible syllable counts for the given line 
 sub syllables_in_line($$$) {
   my $s_in_line = 0;  # the 's' stands for 'syllables'
-  my @words = split('[[:space:]"\?!\:]', $_[2]);
+  my @words = split('[[:space:]"\?!\:\.\,]', $_[2]);
   my $dict = $_[0];
   my $suffixdict = $_[1];
   foreach my $word (@words){
