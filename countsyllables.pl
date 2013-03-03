@@ -23,7 +23,12 @@ for (my $i = 1; $i < 10; $i++) {
   });
 
   for my $status ( @{$r->{results}} ) {
-    my $syllables = &syllables_in_line($dict, $suffixdict, $status->{text});
+    my $string = $status->{text};
+    #Ignore tweets between two users (that is, tweets that start with @)
+    if ($string =~ m/^@/){
+      $personalcount++;
+      next;
+    }
     if ($syllables ne ""){
       print "$syllables: ";
       #print "\@$status->{from_user}";
