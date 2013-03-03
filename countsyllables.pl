@@ -2,6 +2,8 @@
 use strict;
 use Net::Twitter;
 use Scalar::Util 'blessed';
+use Roman;
+use Lingua::EN::Nums2Words;
 
 print "Parsing dictionary\n";
 my $dict       = &dictionary_open ("syllablecount-generated.txt",
@@ -37,6 +39,45 @@ for (my $i = 1; $i < 10; $i++) {
     while ($string =~ /(http:\/\/\S*\b)/) {
       $string =~ s/http:\/\/\S*\b//;
     }
+    
+    #Replace Roman numerals with arabic numerals
+    while ((my $romanNumeral) = $string =~ /\b([IiVvXxLlCcDdMm]+)\b/) {
+      if ($romanNumeral eq "I" || $romanNumeral eq "i") {
+        last;
+      }
+      my $arabicNumeral = arabic($romanNumeral);
+      $string =~ s/\b$romanNumeral\b/$arabicNumeral/;
+    }
+    
+    #Replace Arabic numerals with spelled-out words.
+    while ((my $arabicNumeral) = $string =~ /\b([0-9]+)\b/) {
+      my $englishNumber;
+      
+      #Special handling for numbers that look like years.
+      if ($arabicNumeral < 2099 && $arabicNumeral > 2000) {
+        $englishNumber = "two thousand " . num2word(substr($arabicNumeral, 2,3));
+      }
+      elsif ($arabicNumeral > 1299 && $arabicNumeral < 2000) {
+        $englishNumber = num2word(substr($arabicNumeral, 0,2)) . " " . 
+                         num2word(substr($arabicNumeral, 2,2));
+      }
+      #default
+      else{
+        $englishNumber = num2word($arabicNumeral);
+      }
+      $string =~ s/\b$arabicNumeral\b/$englishNumber/;
+    }
+    
+    #Replace ordinals (1st, 2nd, etc) with spelled out versions
+    #(e.g. first, second, etc)
+    while ((my $ordinal) = $string =~ /\b([0-9]+(?:th|nd|rd|st))\b/) {
+      my $ordinalEnglish = num2word_ordinal(substr($ordinal, 0, -2));
+      $string =~ s/\b$ordinal\b/$ordinalEnglish/;
+    }
+    
+    #Screw non-alphanumerics
+    $string =~ s/[^\w'\s]/ /g;
+    
     my $syllables = &syllables_in_line($dict, $suffixdict, $string);
     if ($syllables ne ""){
       print "$syllables: ";
