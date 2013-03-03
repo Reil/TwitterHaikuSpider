@@ -153,7 +153,7 @@ sub dictionary_open($) {
     open(my $dict, "<", $dictFile)
       or die "Could not open < $dictFile!";
     while (<$dict>){
-      (my $word, my $syllables) = $_ =~ /([a-z\-\\]*)(.*)/;
+      (my $word, my $syllables) = $_ =~ /([a-z\-\\']*)(.*)/;
       if (!($word =~ m/^\-/)) {
         # Remove duplicates
         (my @s_iter) = $syllables =~ /\d+/g;
