@@ -33,6 +33,10 @@ for (my $i = 1; $i < 10; $i++) {
     while ($string =~ /(#\w*)$/) {
       $string =~ s/\s*#\w*$//;
     }
+    #Strip out urls
+    while ($string =~ /(http:\/\/\S*\b)/) {
+      $string =~ s/http:\/\/\S*\b//;
+    }
     if ($syllables ne ""){
       print "$syllables: ";
       #print "\@$status->{from_user}";
