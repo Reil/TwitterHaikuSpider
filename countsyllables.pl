@@ -29,6 +29,10 @@ for (my $i = 1; $i < 10; $i++) {
       $personalcount++;
       next;
     }
+    #Strip out hashtags at the end of tweets.
+    while ($string =~ /(#\w*)$/) {
+      $string =~ s/\s*#\w*$//;
+    }
     if ($syllables ne ""){
       print "$syllables: ";
       #print "\@$status->{from_user}";
