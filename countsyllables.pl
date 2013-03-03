@@ -37,6 +37,7 @@ for (my $i = 1; $i < 10; $i++) {
     while ($string =~ /(http:\/\/\S*\b)/) {
       $string =~ s/http:\/\/\S*\b//;
     }
+    my $syllables = &syllables_in_line($dict, $suffixdict, $string);
     if ($syllables ne ""){
       print "$syllables: ";
       #print "\@$status->{from_user}";
