@@ -1,9 +1,26 @@
 #!/usr/bin/env perl
 use strict;
 use Net::Twitter;
-use Scalar::Util 'blessed';
 use Roman;
 use Lingua::EN::Nums2Words;
+use Storable;
+use Storable qw(nstore);
+
+if ($#ARGV == -1) {
+  die("Missing search term.");
+}
+$| = 1;
+
+my $search = @ARGV[0];
+print "Retrieving previous items.\n";
+my @syllables5;
+my @syllables7;
+if (-e $search."5.txt") {
+  @syllables5 = @{retrieve($search . "5.txt")};
+}
+if (-e $search."7.txt") {
+  @syllables7 = @{retrieve($search . "7.txt")};
+}
 
 print "Parsing dictionary\n";
 my $dict       = &dictionary_open ("syllablecount-generated.txt",
@@ -17,19 +34,38 @@ $ENV{NET_TWITTER_NO_TRENDS_WARNING}=1;
 my $nt = Net::Twitter->new (
   (traits => [qw/API::Search/]));
 
+my $parsedcount = 0;
+my $tweetcount = 0;
+my $usernamecount = 0;
+my $suitablecount = 0;
+my $iffycount = 0;
+  
 for (my $i = 1; $i < 10; $i++) {
   my $r = $nt->search({
-    q=>"pope",
+    q=>"$search",
     rpp=>"100",
     page=> "$i",
+    lang=> 'en',
   });
+  
+  my $s = $nt->search({
+    q=> "#" . "$search",
+    rpp=>"100",
+    page=> "$i",
+    lang=> 'en',
+  });
+  
+  my @combinedResults = (@{$r->{results}}, @{$s->{results}});
 
-  for my $status ( @{$r->{results}} ) {
+  for my $status (@combinedResults) {
     my $string = $status->{text};
     #Ignore tweets between two users (that is, tweets that start with @)
     if ($string =~ m/^@/){
-      $personalcount++;
       next;
+    }
+    $tweetcount++;
+    if ($tweetcount % 10 == 0) {
+      print ".";
     }
     #Strip out hashtags at the end of tweets.
     while ($string =~ /(#\w*)$/) {
@@ -80,15 +116,28 @@ for (my $i = 1; $i < 10; $i++) {
     
     my $syllables = &syllables_in_line($dict, $suffixdict, $string);
     if ($syllables ne ""){
-      print "$syllables: ";
-      #print "\@$status->{from_user}";
-      #print "\t$status->{created_at}\n";
-      print "\t\t$status->{text}\n";
-      #print "-----------------------------------------------------\n";
+      if ((my $count)=$syllables =~ /\b([5])\b/)
+      {
+        push(@syllables5, $status);
+        $suitablecount++;
+      }
+      if ((my $count)=$syllables =~ /\b([7])\b/)
+      {
+        push(@syllables7, $status);
+        $suitablecount++;
+      }
+      $parsedcount++;
     }
   }
 }
+nstore(\@syllables5, $search ."5.txt");
+nstore(\@syllables7, $search ."7.txt");
 
+print "\n$parsedcount out of $tweetcount tweets were parsable\n";
+print "$suitablecount haiku candidates found\n";
+
+
+#Returns a string containing all possible syllable counts for the given line
 sub syllables_in_line($$$) {
   my $s_in_line = 0;  # the 's' stands for 'syllables'
   my @words = split('[[:space:]"\?!\:\.\,#~\-]', $_[2]);
@@ -204,7 +253,6 @@ sub dictionary_open($) {
   my %dictionary = {};
   
   foreach my $dictFile (@_) {
-    print $dictFile;
     open(my $dict, "<", $dictFile)
       or die "Could not open < $dictFile!";
     while (<$dict>){
