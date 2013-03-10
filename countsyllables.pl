@@ -3,6 +3,7 @@ use strict;
 use Net::Twitter;
 use Roman;
 use Lingua::EN::Nums2Words;
+use Lingua::EN::Syllable;
 use Storable;
 use Storable qw(nstore);
 
@@ -22,6 +23,7 @@ if (-e $search."7.txt") {
   @syllables7 = @{retrieve($search . "7.txt")};
 }
 
+
 print "Parsing dictionary\n";
 my $dict       = &dictionary_open ("syllablecount-generated.txt",
                                    "syllablecount-custom.txt");
@@ -31,6 +33,7 @@ print "Parsing complete\n";
 
 
 $ENV{NET_TWITTER_NO_TRENDS_WARNING}=1;
+
 my $nt = Net::Twitter->new (
   (traits => [qw/API::Search/]));
 
@@ -140,7 +143,7 @@ print "$suitablecount haiku candidates found\n";
 #Returns a string containing all possible syllable counts for the given line
 sub syllables_in_line($$$) {
   my $s_in_line = 0;  # the 's' stands for 'syllables'
-  my @words = split('[[:space:]"\?!\:\.\,#~\-]', $_[2]);
+  my @words = split('[[:space:]"\?!\:\.\,#~\-/+\(\)#]', $_[2]);
   my $dict = $_[0];
   my $suffixdict = $_[1];
   foreach my $word (@words){
@@ -245,7 +248,10 @@ sub syllables_in_word($$$) {
       }
     }
   }
-
+  #last resort, use the heuristic function!
+  if ($word_count eq "") {
+    $word_count = syllable($word);
+  }
   return $word_count;
 }
 
